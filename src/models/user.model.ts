@@ -3,13 +3,15 @@ import {UserType} from "../types/user.type";
 
 const userSchema: Schema = new Schema(
     {
+        role: { type: String, enum: ["admin", "user", "company"], default: "user" },
             firstName: {type:String},
             lastName:{type:String},
+        companyName: { type: String },
             email:{type:String,required:true,unique:true},
             contactNo:{type:String,required:true},
             address:{type:String,required:true},
             password:{type:String},
-            role: { type: String, enum: ["admin", "user"], default: "user" },
+        interestedFields: [{ type: String }],
             profileImage: { type: String,default: null},
     },
     {

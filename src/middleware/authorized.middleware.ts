@@ -196,3 +196,26 @@ export async function adminMiddleware(
     });
   }
 }
+
+export async function companyMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user) throw new HttpError(401, "Unauthorized, User Not Found");
+
+    const role = (req.user as any).role;
+
+    if (role !== "company") {
+      throw new HttpError(403, "Forbidden, Company Users Only");
+    }
+
+    return next();
+  } catch (err: any) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Unauthorized",
+    });
+  }
+}

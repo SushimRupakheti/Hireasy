@@ -7,14 +7,24 @@ import { Request, Response } from "express";
 
 let authservice = new AuthService();
 
+const formatZodErrors = (error: z.ZodError) => {
+  const flattened = error.flatten();
+  return {
+    fieldErrors: flattened.fieldErrors,
+    formErrors: flattened.formErrors,
+  };
+};
+
 export class AuthController {
   async registerUser(req: Request, res: Response) {
     try {
       const parsedData = createUserDto.safeParse(req.body);
       if (!parsedData.success) {
-        return res.status(400).json(
-          { success: false, message: parsedData.error.format() }
-        )
+        return res.status(400).json({
+          success: false,
+          message: "Validation failed",
+          errors: formatZodErrors(parsedData.error),
+        });
       }
 
       const newUser = await authservice.registerUser(parsedData.data);
@@ -34,7 +44,8 @@ export class AuthController {
       if (!parsedData.success) {
         return res.status(400).json({
           success: false,
-          message: parsedData.error.format(),
+          message: "Validation failed",
+          errors: formatZodErrors(parsedData.error),
         });
       }
 

@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import { PORT } from './config';
 
 import authRoutes from './routes/auth.route';
+import jobRoutes from './routes/job.route';
 // import adminUserRoute from './routes/admin/user.route';
 // import adminItemRoute from './routes/admin/item.route';
 // import adminPaymentRoute from './routes/admin/payment.route';
@@ -44,6 +45,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use("/api/users", authRoutes);
+app.use("/api/jobs", jobRoutes);
 
 
 app.get('/', (req: Request, res: Response) => {
