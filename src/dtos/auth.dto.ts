@@ -1,5 +1,5 @@
 import z from 'zod';
-import { userSchema } from '../types/user.type';
+import { userSchema, userStatusSchema } from '../types/user.type';
 
 const emptyStringToUndefined = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((value) => {
@@ -24,6 +24,7 @@ const interestedFieldsSchema = z.preprocess((value) => {
 
 const individualRegistrationSchema = userSchema.extend({
   role: z.literal("user"),
+  status: z.literal("pending").optional().default("pending"),
   firstName: z.string().trim().min(1, "First name is required"),
   lastName: z.string().trim().min(1, "Last name is required"),
   interestedFields: interestedFieldsSchema,
@@ -32,6 +33,7 @@ const individualRegistrationSchema = userSchema.extend({
 
 const companyRegistrationSchema = userSchema.extend({
   role: z.literal("company"),
+  status: z.literal("pending").optional().default("pending"),
   companyName: emptyStringToUndefined(z.string().trim().min(1, "Company name is required")),
   firstName: emptyStringToUndefined(z.undefined().optional()),
   lastName: emptyStringToUndefined(z.undefined().optional()),
@@ -60,3 +62,9 @@ export const UpdateProfileDto = z.object({
 });
 
 export type UpdateProfileDto = z.infer<typeof UpdateProfileDto>;
+
+export const UpdateUserStatusDto = z.object({
+  status: userStatusSchema,
+});
+
+export type UpdateUserStatusDto = z.infer<typeof UpdateUserStatusDto>;

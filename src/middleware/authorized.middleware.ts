@@ -219,3 +219,31 @@ export async function companyMiddleware(
     });
   }
 }
+
+export async function verifiedUserMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    if (!req.user) {
+      throw new HttpError(401, "Unauthorized, User Not Found");
+    }
+
+    const status = (req.user as any).status || "pending";
+
+    if (status !== "verified") {
+      throw new HttpError(
+        403,
+        `Account is ${status}. Only verified accounts can perform this action`
+      );
+    }
+
+    return next();
+  } catch (err: any) {
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Account verification required",
+    });
+  }
+}

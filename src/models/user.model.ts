@@ -4,6 +4,12 @@ import {UserType} from "../types/user.type";
 const userSchema: Schema = new Schema(
     {
         role: { type: String, enum: ["admin", "user", "company"], default: "user" },
+        status: {
+            type: String,
+            enum: ["pending", "verified", "rejected", "suspended"],
+            default: "pending",
+            required: true,
+        },
             firstName: {type:String},
             lastName:{type:String},
         companyName: { type: String },
@@ -13,6 +19,22 @@ const userSchema: Schema = new Schema(
             password:{type:String},
         interestedFields: [{ type: String }],
             profileImage: { type: String,default: null},
+        document: {
+            type: {
+                documentType: {
+                    type: String,
+                    enum: ["resume", "company_document"],
+                    required: true,
+                },
+                filename: { type: String, required: true },
+                originalName: { type: String, required: true },
+                mimeType: { type: String, required: true },
+                size: { type: Number, required: true },
+                uploadedAt: { type: Date, required: true },
+            },
+            default: null,
+            _id: false,
+        },
     },
     {
         timestamps:true, //autocreatedAt and updatedAt

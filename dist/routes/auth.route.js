@@ -1,0 +1,28 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_controller_1 = require("../controllers/auth.controller");
+const upload_profile_1 = __importDefault(require("../middlewares/upload-profile"));
+const authorized_middleware_1 = require("../middleware/authorized.middleware");
+const upload_user_document_1 = require("../middlewares/upload-user-document");
+const router = (0, express_1.Router)();
+const authController = new auth_controller_1.AuthController();
+router.post('/register', upload_profile_1.default.none(), authController.registerUser);
+router.post('/login', authController.loginUser);
+router.post('/logout', authController.logoutUser);
+router.get('/me', authorized_middleware_1.authorizedMiddleWare, authController.getCurrentUser);
+router.post('/me/document', authorized_middleware_1.authorizedMiddleWare, upload_user_document_1.uploadSingleUserDocument, authController.uploadUserDocument);
+router.get('/me/document/download', authorized_middleware_1.authorizedMiddleWare, authController.downloadMyDocument);
+router.delete('/me/document', authorized_middleware_1.authorizedMiddleWare, authController.deleteMyDocument);
+router.put('/update/:id', authController.updateUser);
+router.patch('/:id/status', authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.adminMiddleware, authController.updateUserStatus);
+router.get('/:id/document/download', authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.adminMiddleware, authController.downloadUserDocument);
+router.get('/:id', authController.getUserById);
+// router.post("/:id/profile-picture", authController.uploadProfilePicture);
+// router.post("/:id/profile-picture",upload.single("profileImage"),authController.uploadProfilePicture);
+router.post("/request-password-reset", authController.sendResetPasswordEmail);
+router.post("/reset-password/:token", authController.resetPassword);
+exports.default = router;

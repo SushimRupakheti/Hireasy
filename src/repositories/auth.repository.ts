@@ -35,7 +35,10 @@ export class UserRepository implements IUserRepository{
     async updateUserById(id: string, data: Partial<IUser>){
         // UserModel.updateOne({ _id: id }, data);
         const updatedUser = 
-            await UserModel.findByIdAndUpdate(id, data, { new: true });
+            await UserModel.findByIdAndUpdate(id, data, {
+                new: true,
+                runValidators: true,
+            });
         return updatedUser;
     }
      

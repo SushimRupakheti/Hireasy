@@ -8,6 +8,12 @@ import { IUser } from "../models/user.model";
 import { UserModel } from "../models/user.model";
 import { sendEmail } from "../config/email";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { UserStatus } from "../types/user.type";
+import { UserDocument } from "../types/user.type";
+import fs from "fs/promises";
+import path from "path";
+import { userDocumentsDir } from "../middlewares/upload-user-document";
 dotenv.config();
 
 
@@ -25,8 +31,11 @@ async registerUser(data:createUserDto){
 
     //donot save plain text password, hash the pass
     const hashedPassword = await bcrypt.hash(data.password,10);   //complexity
-    data.password =hashedPassword;  //replace plain text with hashed password
-    const newUser = await userRepository.createUser(data);
+    const newUser = await userRepository.createUser({
+        ...data,
+        password: hashedPassword,
+        status: "pending",
+    });
     return newUser
 
 
@@ -62,6 +71,117 @@ async updateUser(userId:string, data:Partial<createUserDto>){
         throw new HttpError(404,"User not found");
     }
     return updatedUser;
+}
+
+async updateUserStatus(userId: string, status: UserStatus) {
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new HttpError(400, "Invalid user id");
+    }
+
+    const updatedUser = await userRepository.updateUserById(userId, { status });
+    if (!updatedUser) {
+        throw new HttpError(404, "User not found");
+    }
+
+    return updatedUser;
+}
+
+async saveUserDocument(userId: string, role: string, file: Express.Multer.File) {
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new HttpError(400, "Invalid user id");
+    }
+
+    if (!["user", "company"].includes(role)) {
+        throw new HttpError(403, "Only workers and companies can upload documents");
+    }
+
+    const existingUser = await userRepository.getUserById(userId);
+    if (!existingUser) {
+        throw new HttpError(404, "User not found");
+    }
+
+    const oldFilename = existingUser.document?.filename;
+    const document: UserDocument = {
+        documentType: role === "company" ? "company_document" : "resume",
+        filename: file.filename,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        uploadedAt: new Date(),
+    };
+
+    const updatedUser = await userRepository.updateUserById(userId, {
+        document,
+    });
+    if (!updatedUser) {
+        throw new HttpError(404, "User not found");
+    }
+
+    if (oldFilename && oldFilename !== file.filename) {
+        await this.removeDocumentFile(oldFilename);
+    }
+
+    return updatedUser;
+}
+
+async deleteUserDocument(userId: string) {
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new HttpError(400, "Invalid user id");
+    }
+
+    const user = await userRepository.getUserById(userId);
+    if (!user) {
+        throw new HttpError(404, "User not found");
+    }
+    if (!user.document) {
+        throw new HttpError(404, "No document found");
+    }
+
+    const filename = user.document.filename;
+    const updatedUser = await userRepository.updateUserById(userId, {
+        document: null,
+    });
+
+    await this.removeDocumentFile(filename);
+    return updatedUser;
+}
+
+async getUserDocument(userId: string) {
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new HttpError(400, "Invalid user id");
+    }
+
+    const user = await userRepository.getUserById(userId);
+    if (!user) {
+        throw new HttpError(404, "User not found");
+    }
+    if (!user.document) {
+        throw new HttpError(404, "No document found");
+    }
+
+    const safeFilename = path.basename(user.document.filename);
+    const absolutePath = path.join(userDocumentsDir, safeFilename);
+    try {
+        await fs.access(absolutePath);
+    } catch {
+        throw new HttpError(404, "Document file not found");
+    }
+
+    return {
+        metadata: user.document,
+        absolutePath,
+    };
+}
+
+private async removeDocumentFile(filename: string) {
+    const safeFilename = path.basename(filename);
+    try {
+        await fs.unlink(path.join(userDocumentsDir, safeFilename));
+    } catch (error: any) {
+        if (error?.code !== "ENOENT") {
+            throw error;
+        }
+    }
 }
 
 
