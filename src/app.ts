@@ -46,6 +46,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use("/api/users", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/upload", express.static(path.join(process.cwd(), "upload")));
 
 
 app.get('/', (req: Request, res: Response) => {

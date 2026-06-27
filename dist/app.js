@@ -17,6 +17,7 @@ const job_route_1 = __importDefault(require("./routes/job.route"));
 // import adminNotificationRoute from './routes/admin/notification.route';
 // import paymentController from './controllers/payment.controller';
 const cors_1 = __importDefault(require("cors"));
+const path_1 = __importDefault(require("path"));
 // dotenv.config();
 const app = (0, express_1.default)();
 // const PORT: number = 3000;
@@ -35,6 +36,7 @@ app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
 app.use("/api/users", auth_route_1.default);
 app.use("/api/jobs", job_route_1.default);
+app.use("/upload", express_1.default.static(path_1.default.join(process.cwd(), "upload")));
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 });

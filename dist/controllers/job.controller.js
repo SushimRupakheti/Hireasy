@@ -13,10 +13,18 @@ const formatZodErrors = (error) => {
 };
 const getParam = (value) => Array.isArray(value) ? value[0] : value;
 const getAuthenticatedUser = (req) => req.user;
+const getUploadedJobPhotoPaths = (req) => {
+    const files = Array.isArray(req.files) ? req.files : [];
+    return files.map((file) => `/upload/jobs/${file.filename}`);
+};
 class JobController {
     async createJob(req, res) {
         try {
-            const parsedData = job_type_1.createJobDto.safeParse(req.body);
+            const uploadedPhotos = getUploadedJobPhotoPaths(req);
+            const parsedData = job_type_1.createJobDto.safeParse({
+                ...req.body,
+                ...(uploadedPhotos.length > 0 ? { photos: uploadedPhotos } : {}),
+            });
             if (!parsedData.success) {
                 return res.status(400).json({
                     success: false,
@@ -156,7 +164,11 @@ class JobController {
                     message: "jobId is required",
                 });
             }
-            const parsedData = job_type_1.updateJobDto.safeParse(req.body);
+            const uploadedPhotos = getUploadedJobPhotoPaths(req);
+            const parsedData = job_type_1.updateJobDto.safeParse({
+                ...req.body,
+                ...(uploadedPhotos.length > 0 ? { photos: uploadedPhotos } : {}),
+            });
             if (!parsedData.success) {
                 return res.status(400).json({
                     success: false,
@@ -312,6 +324,45 @@ class JobController {
             const job = await jobService.getJobApplicants(jobId, company._id.toString());
             return res.status(200).json({
                 success: true,
+                data: job,
+            });
+        }
+        catch (error) {
+            return res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Internal Server Error",
+            });
+        }
+    }
+    async updateApplicationStatus(req, res) {
+        try {
+            const company = getAuthenticatedUser(req);
+            const jobId = getParam(req.params.jobId);
+            const workerId = getParam(req.params.workerId);
+            if (!jobId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "jobId is required",
+                });
+            }
+            if (!workerId) {
+                return res.status(400).json({
+                    success: false,
+                    message: "workerId is required",
+                });
+            }
+            const parsedData = job_type_1.updateApplicationStatusDto.safeParse(req.body);
+            if (!parsedData.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Validation failed",
+                    errors: formatZodErrors(parsedData.error),
+                });
+            }
+            const job = await jobService.updateApplicationStatus(jobId, company._id.toString(), workerId, parsedData.data.status);
+            return res.status(200).json({
+                success: true,
+                message: "Application status updated successfully",
                 data: job,
             });
         }

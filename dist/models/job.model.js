@@ -45,6 +45,7 @@ const jobSchema = new mongoose_1.Schema({
         enum: ["Morning", "Night", "Rotational", "Full Day"],
     },
     location: { type: String, required: true, trim: true },
+    job_date: { type: Date, required: true },
     photos: [{ type: String }],
     description: { type: String, required: true, trim: true },
     status: {
@@ -56,8 +57,20 @@ const jobSchema = new mongoose_1.Schema({
     appliedWorkers: {
         type: [
             {
-                type: mongoose_1.Schema.Types.ObjectId,
-                ref: "User",
+                worker: {
+                    type: mongoose_1.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                status: {
+                    type: String,
+                    enum: ["pending", "accepted", "rejected"],
+                    default: "pending",
+                },
+                appliedAt: {
+                    type: Date,
+                    default: Date.now,
+                },
             },
         ],
         default: [],

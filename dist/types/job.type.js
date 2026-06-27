@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.jobListQueryDto = exports.updateJobStatusDto = exports.updateJobDto = exports.createJobDto = exports.jobSchema = exports.jobShiftSchema = exports.jobStatusSchema = void 0;
+exports.jobListQueryDto = exports.updateApplicationStatusDto = exports.updateJobStatusDto = exports.updateJobDto = exports.createJobDto = exports.jobSchema = exports.applicationStatusSchema = exports.jobShiftSchema = exports.jobStatusSchema = void 0;
 const zod_1 = __importDefault(require("zod"));
 exports.jobStatusSchema = zod_1.default.enum([
     "pending",
@@ -18,13 +18,25 @@ exports.jobShiftSchema = zod_1.default.enum([
     "Rotational",
     "Full Day",
 ]);
+exports.applicationStatusSchema = zod_1.default.enum([
+    "pending",
+    "accepted",
+    "rejected",
+]);
+const jobDateSchema = zod_1.default.preprocess((value) => (value === null || value === "" ? undefined : value), zod_1.default.coerce.date());
+const jobPhotoSchema = zod_1.default
+    .string()
+    .trim()
+    .refine((value) => zod_1.default.string().url().safeParse(value).success ||
+    value.startsWith("/upload/jobs/"), "Each photo must be a valid URL or uploaded job photo path");
 exports.jobSchema = zod_1.default.object({
     roleType: zod_1.default.string().trim().min(3, "roleType must be at least 3 characters"),
     numberOfWorkers: zod_1.default.coerce.number().int().positive("numberOfWorkers must be greater than 0"),
     pay: zod_1.default.coerce.number().positive("pay must be greater than 0"),
     shift: exports.jobShiftSchema,
     location: zod_1.default.string().trim().min(1, "location is required"),
-    photos: zod_1.default.array(zod_1.default.string().url("Each photo must be a valid URL")).optional(),
+    job_date: jobDateSchema,
+    photos: zod_1.default.array(jobPhotoSchema).optional(),
     description: zod_1.default.string().trim().min(20, "description must be at least 20 characters"),
     status: exports.jobStatusSchema.default("pending"),
 });
@@ -37,6 +49,9 @@ exports.updateJobDto = exports.jobSchema
 });
 exports.updateJobStatusDto = zod_1.default.object({
     status: exports.jobStatusSchema,
+});
+exports.updateApplicationStatusDto = zod_1.default.object({
+    status: exports.applicationStatusSchema,
 });
 exports.jobListQueryDto = zod_1.default.object({
     page: zod_1.default.coerce.number().int().positive().default(1),

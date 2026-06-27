@@ -37,8 +37,22 @@ const mongodb_1 = require("./database/mongodb");
 const appModule = __importStar(require("./app"));
 const app = appModule.default || appModule;
 const config_1 = require("./config");
+const job_service_1 = require("./services/job.service");
+const jobService = new job_service_1.JobService();
+function startExpiredJobCloser() {
+    jobService.closeExpiredJobs().catch((error) => {
+        console.error("Failed to close expired jobs", error);
+    });
+    const interval = setInterval(() => {
+        jobService.closeExpiredJobs().catch((error) => {
+            console.error("Failed to close expired jobs", error);
+        });
+    }, 60 * 60 * 1000);
+    interval.unref();
+}
 async function startServer() {
     await (0, mongodb_1.connectDB)();
+    startExpiredJobCloser();
     app.listen(config_1.PORT, "0.0.0.0", () => {
         console.log(`Server running on port ${config_1.PORT}`);
     });

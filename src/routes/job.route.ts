@@ -5,6 +5,7 @@ import {
   companyMiddleware,
   verifiedUserMiddleware,
 } from "../middleware/authorized.middleware";
+import { uploadMultipleJobPhotos } from "../middlewares/upload-job-photos";
 
 const router: Router = Router();
 const jobController = new JobController();
@@ -15,6 +16,7 @@ router.post(
   authorizedMiddleWare,
   verifiedUserMiddleware,
   companyMiddleware,
+  uploadMultipleJobPhotos,
   jobController.createJob
 );
 
@@ -38,6 +40,7 @@ router.patch(
   authorizedMiddleWare,
   verifiedUserMiddleware,
   companyMiddleware,
+  uploadMultipleJobPhotos,
   jobController.updateJob
 );
 router.delete(
@@ -60,6 +63,13 @@ router.get(
   verifiedUserMiddleware,
   companyMiddleware,
   jobController.getJobApplicants
+);
+router.patch(
+  "/:jobId/applicants/:workerId/status",
+  authorizedMiddleWare,
+  verifiedUserMiddleware,
+  companyMiddleware,
+  jobController.updateApplicationStatus
 );
 router.post(
   "/:jobId/apply",

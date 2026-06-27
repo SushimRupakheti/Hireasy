@@ -19,12 +19,31 @@ function escapeRegex(value) {
 }
 function toPublicJob(job) {
     const { appliedWorkers = [], ...publicFields } = job;
+    const applicationStatusCounts = appliedWorkers.reduce((counts, application) => {
+        const status = application.status;
+        if (status in counts)
+            counts[status] += 1;
+        return counts;
+    }, { pending: 0, accepted: 0, rejected: 0 });
     return {
         ...publicFields,
         applicationCount: appliedWorkers.length,
+        applicationStatusCounts,
     };
 }
+function getStartOfToday() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+}
 class JobService {
+    async closeExpiredJobs() {
+        const result = await job_model_1.JobModel.updateMany({
+            job_date: { $lt: getStartOfToday() },
+            status: { $in: ["pending", "open"] },
+        }, { $set: { status: "closed" } });
+        return result.modifiedCount;
+    }
     async createJob(companyId, data) {
         assertValidId(companyId, "company id");
         const job = await job_model_1.JobModel.create({
@@ -37,6 +56,7 @@ class JobService {
         return job;
     }
     async getAllJobs(query, additionalFilter = {}) {
+        await this.closeExpiredJobs();
         const { page, limit, search, roleType, location, shift, status, companyId, minPay, maxPay, } = query;
         const filter = { ...additionalFilter };
         if (companyId) {
@@ -90,6 +110,7 @@ class JobService {
     }
     async getJobById(jobId) {
         assertValidId(jobId, "job id");
+        await this.closeExpiredJobs();
         const job = await job_model_1.JobModel.findById(jobId)
             .populate("companyId", companyFields)
             .lean();
@@ -104,7 +125,7 @@ class JobService {
     }
     async getAppliedJobs(workerId, query) {
         assertValidId(workerId, "worker id");
-        return this.getAllJobs(query, { appliedWorkers: workerId });
+        return this.getAllJobs(query, { "appliedWorkers.worker": workerId });
     }
     async updateJob(jobId, companyId, data) {
         assertValidId(jobId, "job id");
@@ -136,6 +157,7 @@ class JobService {
     async applyForJob(jobId, workerId) {
         assertValidId(jobId, "job id");
         assertValidId(workerId, "worker id");
+        await this.closeExpiredJobs();
         const existingJob = await job_model_1.JobModel.findById(jobId).select("status");
         if (!existingJob) {
             throw new http_error_1.HttpError(404, "Job not found");
@@ -143,16 +165,16 @@ class JobService {
         if (["closed", "filled", "cancelled"].includes(existingJob.status)) {
             throw new http_error_1.HttpError(409, `Cannot apply to a ${existingJob.status} job`);
         }
-        const job = await job_model_1.JobModel.findByIdAndUpdate(jobId, { $addToSet: { appliedWorkers: workerId } }, { new: true });
+        const job = await job_model_1.JobModel.findOneAndUpdate({ _id: jobId, "appliedWorkers.worker": { $ne: workerId } }, { $push: { appliedWorkers: { worker: workerId, status: "pending" } } }, { new: true });
         if (!job) {
-            throw new http_error_1.HttpError(404, "Job not found");
+            throw new http_error_1.HttpError(409, "You have already applied to this job");
         }
         return job;
     }
     async withdrawApplication(jobId, workerId) {
         assertValidId(jobId, "job id");
         assertValidId(workerId, "worker id");
-        const job = await job_model_1.JobModel.findOneAndUpdate({ _id: jobId, appliedWorkers: workerId }, { $pull: { appliedWorkers: workerId } }, { new: true });
+        const job = await job_model_1.JobModel.findOneAndUpdate({ _id: jobId, "appliedWorkers.worker": workerId }, { $pull: { appliedWorkers: { worker: workerId } } }, { new: true });
         if (!job) {
             throw new http_error_1.HttpError(404, "Job or application not found");
         }
@@ -163,10 +185,46 @@ class JobService {
         assertValidId(companyId, "company id");
         const job = await job_model_1.JobModel.findOne({ _id: jobId, companyId })
             .select("roleType status appliedWorkers")
-            .populate("appliedWorkers", applicantFields)
+            .populate("appliedWorkers.worker", applicantFields)
             .lean();
         if (!job) {
             throw new http_error_1.HttpError(404, "Job not found or you do not own this job");
+        }
+        const applicants = {
+            pending: [],
+            accepted: [],
+            rejected: [],
+        };
+        for (const application of job.appliedWorkers ?? []) {
+            const status = application.status;
+            if (!applicants[status])
+                continue;
+            applicants[status].push({
+                status,
+                appliedAt: application.appliedAt,
+                worker: application.worker,
+            });
+        }
+        return {
+            _id: job._id,
+            roleType: job.roleType,
+            status: job.status,
+            applicationCount: job.appliedWorkers?.length ?? 0,
+            applicationStatusCounts: {
+                pending: applicants.pending.length,
+                accepted: applicants.accepted.length,
+                rejected: applicants.rejected.length,
+            },
+            applicants,
+        };
+    }
+    async updateApplicationStatus(jobId, companyId, workerId, status) {
+        assertValidId(jobId, "job id");
+        assertValidId(companyId, "company id");
+        assertValidId(workerId, "worker id");
+        const job = await job_model_1.JobModel.findOneAndUpdate({ _id: jobId, companyId, "appliedWorkers.worker": workerId }, { $set: { "appliedWorkers.$.status": status } }, { new: true, runValidators: true });
+        if (!job) {
+            throw new http_error_1.HttpError(404, "Job or application not found, or you do not own this job");
         }
         return job;
     }

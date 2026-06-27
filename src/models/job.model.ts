@@ -12,6 +12,7 @@ const jobSchema = new Schema(
       enum: ["Morning", "Night", "Rotational", "Full Day"],
     },
     location: { type: String, required: true, trim: true },
+    job_date: { type: Date, required: true },
     photos: [{ type: String }],
     description: { type: String, required: true, trim: true },
     status: {
@@ -23,8 +24,20 @@ const jobSchema = new Schema(
     appliedWorkers: {
       type: [
         {
-          type: Schema.Types.ObjectId,
-          ref: "User",
+          worker: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+          },
+          status: {
+            type: String,
+            enum: ["pending", "accepted", "rejected"],
+            default: "pending",
+          },
+          appliedAt: {
+            type: Date,
+            default: Date.now,
+          },
         },
       ],
       default: [],
@@ -43,7 +56,11 @@ const jobSchema = new Schema(
 export interface IJob extends CreateJobDto, Document {
   _id: mongoose.Types.ObjectId;
   companyId: mongoose.Types.ObjectId;
-  appliedWorkers: mongoose.Types.ObjectId[];
+  appliedWorkers: {
+    worker: mongoose.Types.ObjectId;
+    status: "pending" | "accepted" | "rejected";
+    appliedAt: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
