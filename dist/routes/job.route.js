@@ -10,6 +10,7 @@ router.get("/", jobController.getAllJobs);
 router.post("/", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, authorized_middleware_1.companyMiddleware, upload_job_photos_1.uploadMultipleJobPhotos, jobController.createJob);
 router.get("/mine", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, authorized_middleware_1.companyMiddleware, jobController.getMyJobs);
 router.get("/applied", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, jobController.getMyApplications);
+router.get("/me/applications", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, jobController.getMyApplications);
 router.get("/:jobId", jobController.getJobById);
 router.patch("/:jobId", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, authorized_middleware_1.companyMiddleware, upload_job_photos_1.uploadMultipleJobPhotos, jobController.updateJob);
 router.delete("/:jobId", authorized_middleware_1.authorizedMiddleWare, authorized_middleware_1.verifiedUserMiddleware, authorized_middleware_1.companyMiddleware, jobController.deleteJob);

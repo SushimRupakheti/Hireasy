@@ -10,7 +10,7 @@ process.env.PORT? parseInt(process.env.PORT):5050;
 //avoid exception if env is missing
 
 export const MONGO_URI:string=
-process.env.MONGO_URI || 'mongodb+srv://sushimrupakheti120_db_user:H1XKG2TbSGBe09nX@classcrud.dndzm1n.mongodb.net/mydb'
+process.env.MONGO_URI || ''
 
 //fallback to local mongo db if env is missing
 

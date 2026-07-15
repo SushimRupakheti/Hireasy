@@ -271,26 +271,39 @@ class AuthController {
             });
         }
     }
-    async uploadProfilePicture(req, res) {
+    async uploadMyProfilePicture(req, res) {
+        const file = req.file;
         try {
-            const idParam = req.params.id;
-            const userId = Array.isArray(idParam) ? idParam[0] : idParam;
-            if (!userId)
-                return res.status(400).json({ success: false, message: "Missing user id" });
-            const file = req.file;
+            const user = req.user;
+            const userId = user?._id?.toString();
+            if (!userId) {
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            }
             if (!file) {
-                return res.status(400).json({ success: false, message: "No file uploaded" });
+                return res.status(400).json({
+                    success: false,
+                    message: "No profile picture uploaded. Use the form-data field 'profileImage'",
+                });
             }
             const profileImagePath = `/uploads/${file.filename}`;
             const updatedUser = await authservice.updateProfileImage(userId, profileImagePath);
             return res.status(200).json({
                 success: true,
-                data: updatedUser,
+                data: toSafeUser(updatedUser),
                 message: "Profile picture uploaded successfully",
             });
         }
         catch (error) {
-            return res.status(500).json({ success: false, message: error.message });
+            if (file?.path) {
+                try {
+                    await promises_1.default.unlink(file.path);
+                }
+                catch { }
+            }
+            return res.status(error.statusCode || 500).json({
+                success: false,
+                message: error.message || "Internal Server Error",
+            });
         }
     }
     async sendResetPasswordEmail(req, res) {

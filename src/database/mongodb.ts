@@ -11,8 +11,8 @@ function resolveMongoUri() {
     return (process.env.MONGO_URI || "").trim();
 }
 
-export const connectDB =async()=>{
-    try{
+export const connectDB = async () => {
+    try {
         const uri = resolveMongoUri();
         if (!uri) {
             const nodeEnv = (process.env.NODE_ENV || "").toLowerCase();
@@ -29,6 +29,9 @@ export const connectDB =async()=>{
         // Keep test output clean
         if ((process.env.NODE_ENV || "").toLowerCase() !== "test") {
             console.log("MongoDB connected");
+            console.log("Host:", mongoose.connection.host);
+            console.log("Database:", mongoose.connection.name);
+            console.log("URI:", resolveMongoUri());
         }
         try {
             const coll = mongoose.connection.collection('stripepayments');
@@ -46,7 +49,7 @@ export const connectDB =async()=>{
         } catch (idxErr: any) {
             console.warn('Index migration for stripepayments skipped:', idxErr.message || idxErr);
         }
-    }catch(error){
+    } catch (error) {
         console.error("db error", error);
         // In development, do not exit the process so the app can start without DB.
         const nodeEnv = (process.env.NODE_ENV || "").toLowerCase();

@@ -315,15 +315,21 @@ export class AuthController {
   }
 
 
-  async uploadProfilePicture(req: Request, res: Response) {
-    try {
-      const idParam = req.params.id;
-      const userId = Array.isArray(idParam) ? idParam[0] : idParam;
-      if (!userId) return res.status(400).json({ success: false, message: "Missing user id" });
+  async uploadMyProfilePicture(req: Request, res: Response) {
+    const file = req.file as Express.Multer.File | undefined;
 
-      const file = req.file as Express.Multer.File;
+    try {
+      const user = req.user as any;
+      const userId = user?._id?.toString();
+      if (!userId) {
+        return res.status(401).json({ success: false, message: "Unauthorized" });
+      }
+
       if (!file) {
-        return res.status(400).json({ success: false, message: "No file uploaded" });
+        return res.status(400).json({
+          success: false,
+          message: "No profile picture uploaded. Use the form-data field 'profileImage'",
+        });
       }
 
       const profileImagePath = `/uploads/${file.filename}`;
@@ -332,11 +338,20 @@ export class AuthController {
 
       return res.status(200).json({
         success: true,
-        data: updatedUser,
+        data: toSafeUser(updatedUser),
         message: "Profile picture uploaded successfully",
       });
     } catch (error: any) {
-      return res.status(500).json({ success: false, message: error.message });
+      if (file?.path) {
+        try {
+          await fs.unlink(file.path);
+        } catch {}
+      }
+
+      return res.status(error.statusCode || 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
     }
   }
   async sendResetPasswordEmail(req: Request, res: Response) {

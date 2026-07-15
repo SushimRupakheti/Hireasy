@@ -186,6 +186,10 @@ private async removeDocumentFile(filename: string) {
 
 
 async updateProfileImage(userId: string, imagePath: string) {
+  if (!mongoose.isValidObjectId(userId)) {
+    throw new HttpError(400, "Invalid user id");
+  }
+
   const user = await UserModel.findByIdAndUpdate(
     userId,
     { profileImage: imagePath },
@@ -193,7 +197,7 @@ async updateProfileImage(userId: string, imagePath: string) {
   );
 
   if (!user) {
-    throw new Error("User not found");
+    throw new HttpError(404, "User not found");
   }
 
   return user;

@@ -6,6 +6,7 @@ import { PORT } from './config';
 
 import authRoutes from './routes/auth.route';
 import jobRoutes from './routes/job.route';
+import adminRoutes from './routes/admin.route';
 // import adminUserRoute from './routes/admin/user.route';
 // import adminItemRoute from './routes/admin/item.route';
 // import adminPaymentRoute from './routes/admin/payment.route';
@@ -18,6 +19,7 @@ import jobRoutes from './routes/job.route';
 
 import cors from "cors";
 import path from "path";
+import { notFoundHandler, errorHandler } from './middleware/error-handler.middleware';
 
 
 
@@ -28,7 +30,10 @@ const app: Application = express();
 // const PORT: number = 3000;
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: (process.env.CORS_ORIGINS || "http://localhost:3000,http://localhost:5173")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
     credentials: true,
   })
 );
@@ -46,7 +51,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use("/api/users", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/upload", express.static(path.join(process.cwd(), "upload")));
+app.use("/admin", express.static(path.join(process.cwd(), "admin-panel")));
+app.get("/uploads/:filename", (req: Request, res: Response) => {
+  const filename = Array.isArray(req.params.filename)
+    ? req.params.filename[0]
+    : req.params.filename;
+  res.sendFile(path.join(process.cwd(), "uploads", path.basename(filename)));
+});
 
 
 app.get('/', (req: Request, res: Response) => {
@@ -72,6 +85,9 @@ app.use('/api/auth', authRoutes);
 app.get('/api/test', (req, res) => {
   res.status(200).json({ message: 'API working' });
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 export default app;
 // Ensure CommonJS consumers can require the Express app
 (module as any).exports = app;

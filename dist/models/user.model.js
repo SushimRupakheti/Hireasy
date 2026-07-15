@@ -64,6 +64,16 @@ const userSchema = new mongoose_1.Schema({
             mimeType: { type: String, required: true },
             size: { type: Number, required: true },
             uploadedAt: { type: Date, required: true },
+            verification: {
+                status: {
+                    type: String,
+                    enum: ["pending", "approved", "rejected"],
+                    default: "pending",
+                },
+                reason: { type: String },
+                reviewedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
+                reviewedAt: { type: Date },
+            },
         },
         default: null,
         _id: false,

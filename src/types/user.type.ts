@@ -4,8 +4,16 @@ export const userStatusSchema = z.enum([
     "pending",
     "verified",
     "rejected",
+    "blocked",
     "suspended",
 ]);
+
+export const documentVerificationSchema = z.object({
+    status: z.enum(["pending", "approved", "rejected"]).default("pending"),
+    reason: z.string().optional(),
+    reviewedBy: z.string().optional(),
+    reviewedAt: z.date().optional(),
+});
 
 export const userDocumentSchema = z.object({
     documentType: z.enum(["resume", "company_document"]),
@@ -14,6 +22,7 @@ export const userDocumentSchema = z.object({
     mimeType: z.string(),
     size: z.number().nonnegative(),
     uploadedAt: z.date(),
+    verification: documentVerificationSchema.optional(),
 });
 
 export const userSchema=z.object({

@@ -160,9 +160,12 @@ class AuthService {
         }
     }
     async updateProfileImage(userId, imagePath) {
+        if (!mongoose_1.default.isValidObjectId(userId)) {
+            throw new http_error_1.HttpError(400, "Invalid user id");
+        }
         const user = await user_model_1.UserModel.findByIdAndUpdate(userId, { profileImage: imagePath }, { new: true });
         if (!user) {
-            throw new Error("User not found");
+            throw new http_error_1.HttpError(404, "User not found");
         }
         return user;
     }

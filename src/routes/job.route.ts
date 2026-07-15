@@ -33,6 +33,12 @@ router.get(
   verifiedUserMiddleware,
   jobController.getMyApplications
 );
+router.get(
+  "/me/applications",
+  authorizedMiddleWare,
+  verifiedUserMiddleware,
+  jobController.getMyApplications
+);
 
 router.get("/:jobId", jobController.getJobById);
 router.patch(

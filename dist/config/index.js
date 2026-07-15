@@ -9,7 +9,7 @@ dotenv_1.default.config();
 exports.PORT = process.env.PORT ? parseInt(process.env.PORT) : 5050;
 //ensure PORT is a number, and fallback if not found
 //avoid exception if env is missing
-exports.MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://sushimrupakheti120_db_user:H1XKG2TbSGBe09nX@classcrud.dndzm1n.mongodb.net/mydb';
+exports.MONGO_URI = process.env.MONGO_URI || '';
 //fallback to local mongo db if env is missing
 //application lelevel constants
 exports.JWT_SECRET = process.env.JWT_SECRET || 'defaultsecret';

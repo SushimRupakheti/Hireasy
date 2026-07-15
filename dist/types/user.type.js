@@ -3,14 +3,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userSchema = exports.userDocumentSchema = exports.userStatusSchema = void 0;
+exports.userSchema = exports.userDocumentSchema = exports.documentVerificationSchema = exports.userStatusSchema = void 0;
 const zod_1 = __importDefault(require("zod"));
 exports.userStatusSchema = zod_1.default.enum([
     "pending",
     "verified",
     "rejected",
+    "blocked",
     "suspended",
 ]);
+exports.documentVerificationSchema = zod_1.default.object({
+    status: zod_1.default.enum(["pending", "approved", "rejected"]).default("pending"),
+    reason: zod_1.default.string().optional(),
+    reviewedBy: zod_1.default.string().optional(),
+    reviewedAt: zod_1.default.date().optional(),
+});
 exports.userDocumentSchema = zod_1.default.object({
     documentType: zod_1.default.enum(["resume", "company_document"]),
     filename: zod_1.default.string(),
@@ -18,6 +25,7 @@ exports.userDocumentSchema = zod_1.default.object({
     mimeType: zod_1.default.string(),
     size: zod_1.default.number().nonnegative(),
     uploadedAt: zod_1.default.date(),
+    verification: exports.documentVerificationSchema.optional(),
 });
 exports.userSchema = zod_1.default.object({
     role: zod_1.default.enum(["user", "admin", "company"]).default("user"),

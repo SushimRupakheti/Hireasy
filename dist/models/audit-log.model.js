@@ -33,56 +33,20 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JobModel = void 0;
+exports.AuditLogModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const jobSchema = new mongoose_1.Schema({
-    roleType: [{ type: String, required: true, trim: true }],
-    numberOfWorkers: { type: Number, required: true, min: 1 },
-    pay: { type: Number, required: true, min: 1 },
-    shift: [
-        {
-            type: String,
-            required: true,
-            trim: true,
-        },
-    ],
-    location: [{ type: String, required: true, trim: true }],
-    job_date: { type: Date, required: true },
-    photos: [{ type: String }],
-    description: { type: String, required: true, trim: true },
-    status: {
+const auditLogSchema = new mongoose_1.Schema({
+    adminId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+    action: { type: String, required: true, trim: true },
+    targetType: {
         type: String,
-        required: true,
-        enum: ["pending", "open", "verified", "rejected", "closed", "filled", "cancelled"],
-        default: "pending",
-    },
-    appliedWorkers: {
-        type: [
-            {
-                worker: {
-                    type: mongoose_1.Schema.Types.ObjectId,
-                    ref: "User",
-                    required: true,
-                },
-                status: {
-                    type: String,
-                    enum: ["pending", "accepted", "rejected", "completed"],
-                    default: "pending",
-                },
-                appliedAt: {
-                    type: Date,
-                    default: Date.now,
-                },
-            },
-        ],
-        default: [],
-    },
-    companyId: {
-        type: mongoose_1.Schema.Types.ObjectId,
-        ref: "User",
+        enum: ["user", "job", "application", "document"],
         required: true,
     },
-}, {
-    timestamps: true,
-});
-exports.JobModel = mongoose_1.default.model("Job", jobSchema);
+    targetId: { type: String, required: true, trim: true },
+    oldValue: { type: mongoose_1.Schema.Types.Mixed },
+    newValue: { type: mongoose_1.Schema.Types.Mixed },
+    reason: { type: String, trim: true },
+    timestamp: { type: Date, default: Date.now, required: true },
+}, { timestamps: true });
+exports.AuditLogModel = mongoose_1.default.model("AuditLog", auditLogSchema);

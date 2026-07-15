@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "Hireasy Admin API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5050" },
+    { "key": "adminToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Admin Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/admin/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@hireasy.local\",\n  \"password\": \"Admin@12345\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Dashboard",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/dashboard"
+      }
+    },
+    {
+      "name": "List Users",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/users?search=&role=&status="
+      }
+    },
+    {
+      "name": "Update User Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/:id/status",
+        "body": { "mode": "raw", "raw": "{\n  \"status\": \"verified\"\n}" }
+      }
+    },
+    {
+      "name": "Pending Documents",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/documents/pending"
+      }
+    },
+    {
+      "name": "Approve Document",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/users/:id/document/approve"
+      }
+    },
+    {
+      "name": "Reject Document",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/admin/users/:id/document/reject",
+        "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Document is unreadable\"\n}" }
+      }
+    },
+    {
+      "name": "List Jobs",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/jobs?status=pending"
+      }
+    },
+    {
+      "name": "Update Job Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/admin/jobs/:id/status",
+        "body": { "mode": "raw", "raw": "{\n  \"status\": \"verified\"\n}" }
+      }
+    },
+    {
+      "name": "List Applications",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/applications"
+      }
+    },
+    {
+      "name": "Update Application Status",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/admin/jobs/:jobId/applications/:workerId/status",
+        "body": { "mode": "raw", "raw": "{\n  \"status\": \"accepted\"\n}" }
+      }
+    },
+    {
+      "name": "Audit Logs",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+        "url": "{{baseUrl}}/api/admin/audit-logs"
+      }
+    }
+  ]
+}

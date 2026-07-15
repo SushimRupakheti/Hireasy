@@ -3,22 +3,24 @@ import { CreateJobDto } from "../types/job.type";
 
 const jobSchema = new Schema(
   {
-    roleType: { type: String, required: true, trim: true },
+    roleType: [{ type: String, required: true, trim: true }],
     numberOfWorkers: { type: Number, required: true, min: 1 },
     pay: { type: Number, required: true, min: 1 },
-    shift: {
-      type: String,
-      required: true,
-      enum: ["Morning", "Night", "Rotational", "Full Day"],
-    },
-    location: { type: String, required: true, trim: true },
+    shift: [
+      {
+        type: String,
+        required: true,
+        trim: true,
+      },
+    ],
+    location: [{ type: String, required: true, trim: true }],
     job_date: { type: Date, required: true },
     photos: [{ type: String }],
     description: { type: String, required: true, trim: true },
     status: {
       type: String,
       required: true,
-      enum: ["pending", "open", "closed", "filled", "cancelled"],
+      enum: ["pending", "open", "verified", "rejected", "closed", "filled", "cancelled"],
       default: "pending",
     },
     appliedWorkers: {
@@ -31,7 +33,7 @@ const jobSchema = new Schema(
           },
           status: {
             type: String,
-            enum: ["pending", "accepted", "rejected"],
+            enum: ["pending", "accepted", "rejected", "completed"],
             default: "pending",
           },
           appliedAt: {

@@ -24,7 +24,7 @@ function toPublicJob(job) {
         if (status in counts)
             counts[status] += 1;
         return counts;
-    }, { pending: 0, accepted: 0, rejected: 0 });
+    }, { pending: 0, accepted: 0, rejected: 0, completed: 0 });
     return {
         ...publicFields,
         applicationCount: appliedWorkers.length,
@@ -194,6 +194,7 @@ class JobService {
             pending: [],
             accepted: [],
             rejected: [],
+            completed: [],
         };
         for (const application of job.appliedWorkers ?? []) {
             const status = application.status;
@@ -214,6 +215,7 @@ class JobService {
                 pending: applicants.pending.length,
                 accepted: applicants.accepted.length,
                 rejected: applicants.rejected.length,
+                completed: applicants.completed.length,
             },
             applicants,
         };

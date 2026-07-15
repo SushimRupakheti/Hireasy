@@ -1,19 +1,35 @@
 import { Router } from "express";
 import { AuthController } from "../controllers/auth.controller";
-import upload from "../middlewares/upload-profile";
+import upload, { uploadSingleProfileImage } from "../middlewares/upload-profile";
 import {
   adminMiddleware,
   authorizedMiddleWare,
 } from "../middleware/authorized.middleware";
 import { uploadSingleUserDocument } from "../middlewares/upload-user-document";
+import { rateLimit } from "../middleware/rate-limit.middleware";
 
 const router: Router = Router();
 const authController = new AuthController();
 
-router.post('/register', upload.none(), authController.registerUser);
-router.post('/login',authController.loginUser);
+router.post(
+  '/register',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 30, keyPrefix: "register" }),
+  upload.none(),
+  authController.registerUser
+);
+router.post(
+  '/login',
+  rateLimit({ windowMs: 15 * 60 * 1000, max: 30, keyPrefix: "login" }),
+  authController.loginUser
+);
 router.post('/logout', authController.logoutUser);
 router.get('/me', authorizedMiddleWare, authController.getCurrentUser);
+router.post(
+  "/me/profile-picture",
+  authorizedMiddleWare,
+  uploadSingleProfileImage,
+  authController.uploadMyProfilePicture
+);
 router.post(
   '/me/document',
   authorizedMiddleWare,
@@ -44,8 +60,6 @@ router.get(
   authController.downloadUserDocument
 );
 router.get('/:id', authController.getUserById);
-// router.post("/:id/profile-picture", authController.uploadProfilePicture);
-// router.post("/:id/profile-picture",upload.single("profileImage"),authController.uploadProfilePicture);
 router.post("/request-password-reset", authController.sendResetPasswordEmail);
 router.post("/reset-password/:token", authController.resetPassword);
 

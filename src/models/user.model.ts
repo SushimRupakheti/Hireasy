@@ -31,6 +31,16 @@ const userSchema: Schema = new Schema(
                 mimeType: { type: String, required: true },
                 size: { type: Number, required: true },
                 uploadedAt: { type: Date, required: true },
+                verification: {
+                    status: {
+                        type: String,
+                        enum: ["pending", "approved", "rejected"],
+                        default: "pending",
+                    },
+                    reason: { type: String },
+                    reviewedBy: { type: Schema.Types.ObjectId, ref: "User" },
+                    reviewedAt: { type: Date },
+                },
             },
             default: null,
             _id: false,

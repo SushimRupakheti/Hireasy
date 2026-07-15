@@ -3,22 +3,20 @@ import z from "zod";
 export const jobStatusSchema = z.enum([
   "pending",
   "open",
+  "verified",
+  "rejected",
   "closed",
   "filled",
   "cancelled",
 ]);
 
-export const jobShiftSchema = z.enum([
-  "Morning",
-  "Night",
-  "Rotational",
-  "Full Day",
-]);
+export const jobShiftSchema = z.string().trim().min(1, "shift cannot be empty");
 
 export const applicationStatusSchema = z.enum([
   "pending",
   "accepted",
   "rejected",
+  "completed",
 ]);
 
 const jobDateSchema = z.preprocess(
@@ -36,14 +34,57 @@ const jobPhotoSchema = z
     "Each photo must be a valid URL or uploaded job photo path"
   );
 
+const normalizeStringValues = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) =>
+      typeof item === "string"
+        ? item.split(",").map((part) => part.trim()).filter(Boolean)
+        : item
+    );
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return value;
+};
+
+const stringValuesSchema = (
+  fieldName: string,
+  minLength = 1,
+  minLengthMessage = `${fieldName} cannot be empty`
+) =>
+  z.preprocess(
+    normalizeStringValues,
+    z
+      .array(z.string().trim().min(minLength, minLengthMessage))
+      .min(1, `${fieldName} is required`)
+  );
+
+const jobShiftValuesSchema = z.preprocess(
+  normalizeStringValues,
+  z.array(jobShiftSchema).min(1, "shift is required")
+);
+
 export const jobSchema = z.object({
-  roleType: z.string().trim().min(3, "roleType must be at least 3 characters"),
+  roleType: stringValuesSchema(
+    "roleType",
+    3,
+    "Each roleType must be at least 3 characters"
+  ),
   numberOfWorkers: z.coerce.number().int().positive("numberOfWorkers must be greater than 0"),
   pay: z.coerce.number().positive("pay must be greater than 0"),
-  shift: jobShiftSchema,
-  location: z.string().trim().min(1, "location is required"),
+  shift: jobShiftValuesSchema,
+  location: stringValuesSchema("location"),
   job_date: jobDateSchema,
-  photos: z.array(jobPhotoSchema).optional(),
+  photos: z.preprocess(
+    (value) => (typeof value === "string" ? [value] : value),
+    z.array(jobPhotoSchema)
+  ).optional(),
   description: z.string().trim().min(20, "description must be at least 20 characters"),
   status: jobStatusSchema.default("pending"),
 });
@@ -74,6 +115,8 @@ export const jobListQueryDto = z.object({
   shift: jobShiftSchema.optional(),
   status: jobStatusSchema.optional(),
   companyId: z.string().trim().min(1).optional(),
+  jobDateFrom: z.coerce.date().optional(),
+  jobDateTo: z.coerce.date().optional(),
   minPay: z.coerce.number().nonnegative().optional(),
   maxPay: z.coerce.number().nonnegative().optional(),
 }).refine(
