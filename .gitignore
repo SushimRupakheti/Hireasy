@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Runtime uploads
+upload/
+uploads/
+
+# Editor and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
