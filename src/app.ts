@@ -1,7 +1,6 @@
 import express , { Application, Request, Response } from 'express';
 
 import { connectDB } from './database/mongodb';
-import bodyParser from 'body-parser';
 import { PORT } from './config';
 
 import authRoutes from './routes/auth.route';
@@ -47,8 +46,7 @@ app.use(
 
 app.use(express.json());
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", authRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/admin", adminRoutes);
