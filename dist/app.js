@@ -4,10 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const body_parser_1 = __importDefault(require("body-parser"));
 const auth_route_1 = __importDefault(require("./routes/auth.route"));
 const job_route_1 = __importDefault(require("./routes/job.route"));
 const admin_route_1 = __importDefault(require("./routes/admin.route"));
+const verification_route_1 = __importDefault(require("./routes/verification.route"));
+const notification_route_1 = __importDefault(require("./routes/notification.route"));
+const message_route_1 = __importDefault(require("./routes/message.route"));
 // import adminUserRoute from './routes/admin/user.route';
 // import adminItemRoute from './routes/admin/item.route';
 // import adminPaymentRoute from './routes/admin/payment.route';
@@ -37,11 +39,13 @@ app.use((0, cors_1.default)({
 //   (req: Request, res: Response) => paymentController.handleStripeWebhook(req, res)
 // );
 app.use(express_1.default.json());
-app.use(body_parser_1.default.json());
-app.use(body_parser_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.urlencoded({ extended: true }));
 app.use("/api/users", auth_route_1.default);
 app.use("/api/jobs", job_route_1.default);
 app.use("/api/admin", admin_route_1.default);
+app.use("/api/verification", verification_route_1.default);
+app.use("/api/notifications", notification_route_1.default);
+app.use("/api/messages", message_route_1.default);
 app.use("/upload", express_1.default.static(path_1.default.join(process.cwd(), "upload")));
 app.use("/admin", express_1.default.static(path_1.default.join(process.cwd(), "admin-panel")));
 app.get("/uploads/:filename", (req, res) => {

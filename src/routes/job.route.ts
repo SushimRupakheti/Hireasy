@@ -23,20 +23,17 @@ router.post(
 router.get(
   "/mine",
   authorizedMiddleWare,
-  verifiedUserMiddleware,
   companyMiddleware,
   jobController.getMyJobs
 );
 router.get(
   "/applied",
   authorizedMiddleWare,
-  verifiedUserMiddleware,
   jobController.getMyApplications
 );
 router.get(
   "/me/applications",
   authorizedMiddleWare,
-  verifiedUserMiddleware,
   jobController.getMyApplications
 );
 

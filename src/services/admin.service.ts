@@ -8,6 +8,7 @@ import { JobModel } from "../models/job.model";
 import { UserModel } from "../models/user.model";
 import { ApplicationStatus, JobStatus } from "../types/job.type";
 import { UserStatus } from "../types/user.type";
+import { notificationService } from "./notification.service";
 
 const userSafeProjection = "-password";
 const workerPopulateFields =
@@ -216,6 +217,21 @@ export class AdminService {
       { status },
       reason
     );
+    if (oldUser.status !== status) {
+      await notificationService.create({
+        recipient: id,
+        type:
+          status === "verified"
+            ? "account_verified"
+            : status === "rejected"
+              ? "account_rejected"
+              : "account_status_changed",
+        title: `Account ${status}`,
+        message: `Your account status is now ${status}${reason ? `: ${reason}` : "."}`,
+        data: { status, reason: reason || null },
+        actionUrl: "/profile",
+      });
+    }
     return updatedUser;
   }
 
@@ -281,6 +297,14 @@ export class AdminService {
       oldUser.document,
       updatedUser?.document
     );
+    await notificationService.create({
+      recipient: userId,
+      type: "document_approved",
+      title: "Document approved",
+      message: "Your document was approved and your account is now verified.",
+      data: { status: "approved" },
+      actionUrl: "/profile",
+    });
     return updatedUser;
   }
 
@@ -317,6 +341,14 @@ export class AdminService {
       updatedUser?.document,
       reason
     );
+    await notificationService.create({
+      recipient: userId,
+      type: "document_rejected",
+      title: "Document rejected",
+      message: `Your document was rejected: ${reason}`,
+      data: { status: "rejected", reason },
+      actionUrl: "/profile",
+    });
     return updatedUser;
   }
 
@@ -418,6 +450,16 @@ export class AdminService {
       { status },
       reason
     );
+    if (oldJob.status !== status) {
+      await notificationService.create({
+        recipient: (updatedJob as any).companyId,
+        type: "job_status_changed",
+        title: `Job ${status}`,
+        message: `Your ${updatedJob?.roleType?.join(", ") || "job"} posting is now ${status}${reason ? `: ${reason}` : "."}`,
+        data: { jobId: id, status, reason: reason || null },
+        actionUrl: `/jobs/${id}`,
+      });
+    }
     return updatedJob;
   }
 
@@ -515,6 +557,16 @@ export class AdminService {
       { worker: workerId, status },
       reason
     );
+    if (oldApplication?.status !== status) {
+      await notificationService.create({
+        recipient: workerId,
+        type: "application_status_changed",
+        title: `Application ${status}`,
+        message: `Your application for ${(job as any).roleType?.join(", ") || "a job"} was ${status}${reason ? `: ${reason}` : "."}`,
+        data: { jobId, status, reason: reason || null },
+        actionUrl: `/jobs/${jobId}`,
+      });
+    }
     return updatedJob;
   }
 

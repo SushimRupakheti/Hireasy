@@ -39,11 +39,18 @@ Auth/mobile:
 - `POST /api/auth/me/document`
 - `GET /api/auth/me/document/download`
 - `DELETE /api/auth/me/document`
+- `POST /api/verification`
 - `GET /api/jobs`
 - `POST /api/jobs`
 - `GET /api/jobs/:jobId`
 - `POST /api/jobs/:jobId/apply`
 - `GET /api/jobs/me/applications`
+- `GET /api/notifications?page=1&limit=20&unreadOnly=false`
+- `PATCH /api/notifications/:notificationId/read`
+- `PATCH /api/notifications/read-all`
+- `GET /api/messages`
+- `POST /api/messages`
+- `PATCH /api/messages/read`
 
 Admin:
 
@@ -70,8 +77,18 @@ Admin:
 - `GET /api/admin/applications`
 - `PATCH /api/admin/jobs/:jobId/applications/:workerId/status`
 - `GET /api/admin/audit-logs`
+- `GET /api/admin/messages`
+- `GET /api/admin/messages/:userId`
+- `POST /api/admin/messages/:userId`
+- `PATCH /api/admin/messages/:userId/read`
+- `GET /api/verification`
+- `PATCH /api/verification/:userId`
 
 All admin routes except login require `Authorization: Bearer <admin-token>`.
+Notification routes also require `Authorization: Bearer <token>`. The list response
+includes `data`, `unreadCount`, and pagination metadata for a notification bell or
+inbox. Notifications are created for account/document verification decisions, account
+and job status changes, new job applications, and application status changes.
 
 ## Security Notes
 

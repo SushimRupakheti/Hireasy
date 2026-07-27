@@ -12,6 +12,7 @@ const http_error_1 = require("../errors/http-error");
 const audit_log_model_1 = require("../models/audit-log.model");
 const job_model_1 = require("../models/job.model");
 const user_model_1 = require("../models/user.model");
+const notification_service_1 = require("./notification.service");
 const userSafeProjection = "-password";
 const workerPopulateFields = "firstName lastName email contactNo address interestedFields profileImage document status";
 const companyPopulateFields = "companyName firstName lastName email contactNo address profileImage document status";
@@ -162,6 +163,20 @@ class AdminService {
             .select(userSafeProjection)
             .lean();
         await this.audit(adminId, `user.status.${status}`, "user", id, { status: oldUser.status }, { status }, reason);
+        if (oldUser.status !== status) {
+            await notification_service_1.notificationService.create({
+                recipient: id,
+                type: status === "verified"
+                    ? "account_verified"
+                    : status === "rejected"
+                        ? "account_rejected"
+                        : "account_status_changed",
+                title: `Account ${status}`,
+                message: `Your account status is now ${status}${reason ? `: ${reason}` : "."}`,
+                data: { status, reason: reason || null },
+                actionUrl: "/profile",
+            });
+        }
         return updatedUser;
     }
     async deleteUser(adminId, id) {
@@ -213,6 +228,14 @@ class AdminService {
             .select(userSafeProjection)
             .lean();
         await this.audit(adminId, "document.approved", "document", userId, oldUser.document, updatedUser?.document);
+        await notification_service_1.notificationService.create({
+            recipient: userId,
+            type: "document_approved",
+            title: "Document approved",
+            message: "Your document was approved and your account is now verified.",
+            data: { status: "approved" },
+            actionUrl: "/profile",
+        });
         return updatedUser;
     }
     async rejectDocument(adminId, userId, reason) {
@@ -236,6 +259,14 @@ class AdminService {
             .select(userSafeProjection)
             .lean();
         await this.audit(adminId, "document.rejected", "document", userId, oldUser.document, updatedUser?.document, reason);
+        await notification_service_1.notificationService.create({
+            recipient: userId,
+            type: "document_rejected",
+            title: "Document rejected",
+            message: `Your document was rejected: ${reason}`,
+            data: { status: "rejected", reason },
+            actionUrl: "/profile",
+        });
         return updatedUser;
     }
     async listJobs(query) {
@@ -304,6 +335,16 @@ class AdminService {
             throw new http_error_1.HttpError(404, "Job not found");
         const updatedJob = await job_model_1.JobModel.findByIdAndUpdate(id, { $set: { status } }, { new: true, runValidators: true }).lean();
         await this.audit(adminId, `job.status.${status}`, "job", id, oldJob, { status }, reason);
+        if (oldJob.status !== status) {
+            await notification_service_1.notificationService.create({
+                recipient: updatedJob.companyId,
+                type: "job_status_changed",
+                title: `Job ${status}`,
+                message: `Your ${updatedJob?.roleType?.join(", ") || "job"} posting is now ${status}${reason ? `: ${reason}` : "."}`,
+                data: { jobId: id, status, reason: reason || null },
+                actionUrl: `/jobs/${id}`,
+            });
+        }
         return updatedJob;
     }
     async deleteJob(adminId, id) {
@@ -369,6 +410,16 @@ class AdminService {
             .populate("appliedWorkers.worker", workerPopulateFields)
             .lean();
         await this.audit(adminId, `application.status.${status}`, "application", `${jobId}:${workerId}`, oldApplication, { worker: workerId, status }, reason);
+        if (oldApplication?.status !== status) {
+            await notification_service_1.notificationService.create({
+                recipient: workerId,
+                type: "application_status_changed",
+                title: `Application ${status}`,
+                message: `Your application for ${job.roleType?.join(", ") || "a job"} was ${status}${reason ? `: ${reason}` : "."}`,
+                data: { jobId, status, reason: reason || null },
+                actionUrl: `/jobs/${jobId}`,
+            });
+        }
         return updatedJob;
     }
     async listAuditLogs(query) {

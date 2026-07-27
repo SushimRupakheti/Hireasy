@@ -6,10 +6,12 @@ import {
 } from "../middleware/authorized.middleware";
 import { rateLimit } from "../middleware/rate-limit.middleware";
 import { AuthController } from "../controllers/auth.controller";
+import { MessageController } from "../controllers/message.controller";
 
 const router = Router();
 const adminController = new AdminController();
 const authController = new AuthController();
+const messageController = new MessageController();
 const requireAdmin = [authorizedMiddleWare, adminMiddleware];
 
 router.post(
@@ -90,5 +92,26 @@ router.patch(
 );
 
 router.get("/audit-logs", requireAdmin, adminController.auditLogs.bind(adminController));
+
+router.get(
+  "/messages",
+  requireAdmin,
+  messageController.listConversations.bind(messageController)
+);
+router.get(
+  "/messages/:userId",
+  requireAdmin,
+  messageController.getConversation.bind(messageController)
+);
+router.post(
+  "/messages/:userId",
+  requireAdmin,
+  messageController.reply.bind(messageController)
+);
+router.patch(
+  "/messages/:userId/read",
+  requireAdmin,
+  messageController.markConversationRead.bind(messageController)
+);
 
 export default router;

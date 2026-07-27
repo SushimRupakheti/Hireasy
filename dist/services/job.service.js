@@ -7,6 +7,7 @@ exports.JobService = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const job_model_1 = require("../models/job.model");
 const http_error_1 = require("../errors/http-error");
+const notification_service_1 = require("./notification.service");
 const companyFields = "companyName firstName lastName address profileImage";
 const applicantFields = "firstName lastName email contactNo address interestedFields profileImage";
 function assertValidId(id, fieldName) {
@@ -169,6 +170,14 @@ class JobService {
         if (!job) {
             throw new http_error_1.HttpError(409, "You have already applied to this job");
         }
+        await notification_service_1.notificationService.create({
+            recipient: job.companyId,
+            type: "application_received",
+            title: "New job application",
+            message: `A worker applied for ${job.roleType.join(", ")}.`,
+            data: { jobId: job._id.toString(), workerId },
+            actionUrl: `/jobs/${job._id}/applicants`,
+        });
         return job;
     }
     async withdrawApplication(jobId, workerId) {
@@ -228,6 +237,14 @@ class JobService {
         if (!job) {
             throw new http_error_1.HttpError(404, "Job or application not found, or you do not own this job");
         }
+        await notification_service_1.notificationService.create({
+            recipient: workerId,
+            type: "application_status_changed",
+            title: `Application ${status}`,
+            message: `Your application for ${job.roleType.join(", ")} was ${status}.`,
+            data: { jobId: job._id.toString(), status },
+            actionUrl: `/jobs/${job._id}`,
+        });
         return job;
     }
 }

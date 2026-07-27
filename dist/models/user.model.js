@@ -52,6 +52,21 @@ const userSchema = new mongoose_1.Schema({
     password: { type: String },
     interestedFields: [{ type: String }],
     profileImage: { type: String, default: null },
+    verificationRequest: {
+        type: {
+            status: {
+                type: String,
+                enum: ["pending", "approved", "rejected"],
+                required: true,
+            },
+            requestedAt: { type: Date, required: true },
+            reviewedAt: { type: Date },
+            reviewedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
+            reason: { type: String },
+        },
+        default: null,
+        _id: false,
+    },
     document: {
         type: {
             documentType: {

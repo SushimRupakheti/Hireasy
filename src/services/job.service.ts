@@ -8,6 +8,7 @@ import {
   UpdateJobDto,
 } from "../types/job.type";
 import { HttpError } from "../errors/http-error";
+import { notificationService } from "./notification.service";
 
 const companyFields = "companyName firstName lastName address profileImage";
 const applicantFields =
@@ -244,6 +245,15 @@ export class JobService {
       throw new HttpError(409, "You have already applied to this job");
     }
 
+    await notificationService.create({
+      recipient: job.companyId,
+      type: "application_received",
+      title: "New job application",
+      message: `A worker applied for ${job.roleType.join(", ")}.`,
+      data: { jobId: job._id.toString(), workerId },
+      actionUrl: `/jobs/${job._id}/applicants`,
+    });
+
     return job;
   }
 
@@ -329,6 +339,15 @@ export class JobService {
     if (!job) {
       throw new HttpError(404, "Job or application not found, or you do not own this job");
     }
+
+    await notificationService.create({
+      recipient: workerId,
+      type: "application_status_changed",
+      title: `Application ${status}`,
+      message: `Your application for ${job.roleType.join(", ")} was ${status}.`,
+      data: { jobId: job._id.toString(), status },
+      actionUrl: `/jobs/${job._id}`,
+    });
 
     return job;
   }

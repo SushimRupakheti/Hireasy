@@ -30,6 +30,9 @@ const connectDB = async () => {
         // Keep test output clean
         if ((process.env.NODE_ENV || "").toLowerCase() !== "test") {
             console.log("MongoDB connected");
+            console.log("Host:", mongoose_1.default.connection.host);
+            console.log("Database:", mongoose_1.default.connection.name);
+            console.log("URI:", resolveMongoUri());
         }
         try {
             const coll = mongoose_1.default.connection.collection('stripepayments');
